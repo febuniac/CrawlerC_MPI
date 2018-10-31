@@ -14,6 +14,7 @@
 #include <list>
 #include <boost/serialization/string.hpp>
 #include <boost/mpi/collectives.hpp>
+#include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
 
 using namespace std;
@@ -89,12 +90,11 @@ for (int i = 0; i < vectorz.size(); ++i)
 {
     int resto_tam_batch =i%n; //i é oi tamanho total da lista de links e n é o numero de processos
         vectorz_cut_total[resto_tam_batch].push_back(vectorz[i]);
-        std::cout <<"size:"<< vectorz_cut_total.size()<<'\n';  
 }
 for (int i =0; i < vectorz_cut_total.size();i++){
     for (int j =0; j < vectorz_cut_total[i].size() ;j++)
             {
-                std::cout <<"info:"<< vectorz_cut_total[i][j]<<'\n';
+                std::cout <<"info:"<<"i:"<<i<<"j:"<<j<< vectorz_cut_total[i][j]<<'\n';
             }
 }
 }
@@ -138,7 +138,7 @@ string curl_downloadHTML(std::string url){
 std::vector< string > download_products_links_LOOP(std::string url,mpi::communicator world,std::vector<vector<string> >&vectorz_cut_total){
     std::string vazio ="";
     std::vector< string > list_link_products;
-    std::vector< string > pedacos;
+    
     while(url != vazio){//Faz isso para todos os produtos
         std::string html_page = curl_downloadHTML(url);//Coleta página inicial
         
@@ -156,7 +156,6 @@ std::vector< string > download_products_links_LOOP(std::string url,mpi::communic
 
         }       
         
-        //mpi::scatter(world,vectorz_cut_total,pedacos, 0);
         // for (int i = 0; i < world.size(); i++){
            
         // }
@@ -187,8 +186,10 @@ std::vector< string > download_products_links_LOOP(std::string url,mpi::communic
     return list_link_products;
 }
 
-
-
+void envia_recebe(mpi::communicator world,std::vector<vector<string> >&vectorz_cut_total,std::vector< string > &pedacos)
+    {
+        mpi::scatter(world,vectorz_cut_total,pedacos, 0);
+    }
 
 int main(int argc, char* argv[])
 {
@@ -215,12 +216,13 @@ int main(int argc, char* argv[])
     //     std::cout << "Received " << data << " from " << world.rank()-1 << "\n";
     // }
     std::vector<vector<string> > vectorz_cut_total(x);
+    std::vector< string > pedacos;
     std:: string url = "https://www.submarino.com.br/busca/controle-remoto-fisher-price?pfm_carac=controle%20remoto%20fisher%20price&pfm_index=8&pfm_page=search&pfm_type=spectreSuggestions";
     if(world.rank()==0){
     download_products_links_LOOP(url,world,vectorz_cut_total);
     }
-
-    
+    envia_recebe(world,vectorz_cut_total,pedacos);
+   
     return 0;
 }
 
