@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/Users/felipebuniac/Github/CrawlerC_MPI/crawler_url_da_listagem_por_categoria_sequencial.cpp
+iostream
+-
+string
+-
+curl/curl.h
+-
+fstream
+-
+stdio.h
+-
+regex
+-
+vector
+-
+iterator
+-
+thread
+-
+chrono
+-
+list
+-
+

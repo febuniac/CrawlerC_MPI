@@ -1,0 +1,4 @@
+/Users/felipebuniac/Github/CrawlerC_MPI/CMakeFiles/rebuild_cache.dir
+/Users/felipebuniac/Github/CrawlerC_MPI/CMakeFiles/edit_cache.dir
+/Users/felipebuniac/Github/CrawlerC_MPI/CMakeFiles/crawlerDistribuido.dir
+/Users/felipebuniac/Github/CrawlerC_MPI/CMakeFiles/CrawlerSequencial.dir

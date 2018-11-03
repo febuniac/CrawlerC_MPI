@@ -16,14 +16,13 @@
 #include <boost/mpi/collectives.hpp>
 #include <boost/serialization/vector.hpp>
 #include <boost/serialization/map.hpp>
+#include <boost/mpi.hpp>
+#include <ctime>
+#include <boost/mpi/nonblocking.hpp>
+ // All about MPI Scatter and Gather http://mpitutorial.com/tutorials/mpi-scatter-gather-and-allgather/
 
 using namespace std;
 namespace mpi = boost::mpi;
-
-
-// int square(int i){
-//     return pow(i,2);
-// }
 
 //function that prints vectors
 template<typename T>
@@ -43,60 +42,21 @@ void write_file(string info, string filename){
     myfile.close();
 }
 
-// // Divide a lista de produtos em batches 
-// std::vector< string > batches(std::vector< string > vectorz, int n, mpi::communicator world){// input vector of integers, split vector into sub-vectors each of size n
-// //     // determine number of sub-vectors of size n
-// int size = world.size();
-//     //  int size = (vectorz.size() - 1) / n + 1;
-
-//     // create array of vectors to store the sub-vectors
-//     std::vector<string> vec[size];
-
-//     // each iteration of this loop process next set of n elements
-//     // and store it in a vector at k'th index in vec
-//     for (int k = 0; k < size; ++k)
-//     {
-//         // get range for next set of n elements
-//         auto start_itr = std::next(vectorz.cbegin(), k*n);
-//         auto end_itr = std::next(vectorz.cbegin(), k*n + n);
-
-//         // allocate memory for the sub-vector
-//         vec[k].resize(n);
-
-//         // code to handle the last sub-vector as it might
-//         // contain less elements
-//         if (k*n + n > vectorz.size()) {
-//             end_itr = vectorz.cend();
-//             vec[k].resize(vectorz.size() - k*n);
-//         }
-
-//         // copy elements from the input range to the sub-vector
-//         std::copy(start_itr, end_itr, vec[k].begin());
-//     }
-
-//     // print the sub-vectors
-//     for (int i = 0; i < size; i++) {
-//         std::cout<<vectorz.size()<<'/n';
-//         print_vector(vec[i]);
-//     }
-// }
+//Function that receives a vector  of strings and creates a vector with suvectors(batches) of string acording to the size of processes specified by the user.
 void batches(mpi::communicator world,std::vector< string > &vectorz,std::vector<vector<string> >&vectorz_cut_total, int n){
-// int tam_batch = vectorz.size()/n;
+    for (int i = 0; i < vectorz.size(); ++i)//size of the whole string vector
+    {
+        int resto_tam_batch =i%n; //i é o tamanho total da lista de links e n é o numero de processos
+        vectorz_cut_total[resto_tam_batch].push_back(vectorz[i]);//cretaing the new vector of batches
+    }
 
-
-std::vector< string > vectorz_cut;
-
-for (int i = 0; i < vectorz.size(); ++i)
-{
-    int resto_tam_batch =i%n; //i é oi tamanho total da lista de links e n é o numero de processos
-        vectorz_cut_total[resto_tam_batch].push_back(vectorz[i]);
-}
-for (int i =0; i < vectorz_cut_total.size();i++){
-    for (int j =0; j < vectorz_cut_total[i].size() ;j++)
-            {
-                std::cout <<"info:"<<"i:"<<i<<"j:"<<j<< vectorz_cut_total[i][j]<<'\n';
-            }
-}
+    //Print batches per vector
+    for (int i =0; i < vectorz_cut_total.size();i++){
+        for (int j =0; j < vectorz_cut_total[i].size() ;j++)
+                {
+                    std::cout <<"info: "<<"pos vetor (i) :"<<i<<" tam vetor (j): "<<j<< vectorz_cut_total[i][j]<<'\n';
+                }
+    }
 }
 
 
@@ -135,9 +95,10 @@ string curl_downloadHTML(std::string url){
     return readBuffer;
 }
 // Processo 0 (pt1): (master)
-std::vector< string > download_products_links_LOOP(std::string url,mpi::communicator world,std::vector<vector<string> >&vectorz_cut_total){
+void download_products_links_LOOP(std::string url,mpi::communicator world,std::vector<vector<string> >&vectorz_cut_total){
     std::string vazio ="";
     std::vector< string > list_link_products;
+    
     
     while(url != vazio){//Faz isso para todos os produtos
         std::string html_page = curl_downloadHTML(url);//Coleta página inicial
@@ -147,18 +108,13 @@ std::vector< string > download_products_links_LOOP(std::string url,mpi::communic
         auto words_begin = std::sregex_iterator(html_page.begin(), html_page.end(), linksprod_reg);
         auto words_end = std::sregex_iterator();
         std::string link_com_site_antes_p = "";
-        for (std::sregex_iterator i = words_begin; i != words_end; ++i) {//Entra no URL de Categoria no seu website 
+        for (std::sregex_iterator i = words_begin; i != words_end; ++i) {// Enters the Category URL in the specified URL 
             std::smatch match = *i;
             std::string match_str_prod = match[1].str();
             link_com_site_antes_p = "https://www.submarino.com.br" + match_str_prod;
-            list_link_products.push_back(link_com_site_antes_p);//Joga na Queue1 
-            
-
+            list_link_products.push_back(link_com_site_antes_p);//Creates list of links (complete) 
         }       
-        
-        // for (int i = 0; i < world.size(); i++){
-           
-        // }
+
 
         //_____________________________________________________________________________________________
         
@@ -179,25 +135,191 @@ std::vector< string > download_products_links_LOOP(std::string url,mpi::communic
             list_link_nexts.push_back(link_com_site_antes_n);
         }
         url = link_com_site_antes_n;
-        
         //_____________________________________________________________________________________________
     }
-    batches(world,list_link_products,vectorz_cut_total, world.size());
-    return list_link_products;
+    batches(world,list_link_products,vectorz_cut_total, world.size());//divides the complete list of links into a vector uf sub lists of smaller sizes
 }
 
-void envia_recebe(mpi::communicator world,std::vector<vector<string> >&vectorz_cut_total,std::vector< string > &pedacos)
+
+//Function that sends batches to processes --> if the btaches are over send empy batches  else send and receive the batches to all running processes
+void envia_recebe(mpi::communicator world,std::vector<vector<string> >&vectorz_cut_total,std::vector< string > &pedacos,std::vector<vector<string> > &vazio_vec)
     {
-        mpi::scatter(world,vectorz_cut_total,pedacos, 0);
+        if (vectorz_cut_total.size()<=0)//Condição de parada --> manda a lista vazia
+            {
+                mpi::scatter(world,vazio_vec,pedacos, 0);
+            }
+        else
+            {
+                mpi::scatter(world,vectorz_cut_total,pedacos, 0); // Manda os batches para todos os processos pedacos é a lista que cada processo ira receber com seu batch especifico
+            }
     }
+
+
+//Function that download all HTML from the products lists and puts it in a list
+std::vector< string >  download_HTMLpages_products_LOOP(mpi::communicator world,std::vector< string > &pedacos,std::vector< string > &list_HTML_products){
+    for (int i = 0; i <= pedacos.size(); ++i)
+        {
+            std::string link_baixado= pedacos[i];
+            std::string html_page_prod = curl_downloadHTML(link_baixado);
+            list_HTML_products.push_back(html_page_prod);
+        }
+    return list_HTML_products;
+}
+
+
+std::string smatch_regex(std::string link_produto,std::regex reg){
+    smatch match;
+    if (regex_search(link_produto, match, reg) == true) {
+        // cout << "INFOS : " << match[1].str() << endl;
+    }
+    return match[1].str();
+}
+
+//Function that gets infos of all HTML downloaded from prodcuts
+void get_infos_productHTML_LOOP(std::string url,std::vector< string > &list_HTML_products, std::vector< string > &list_Jsons){
+    for (int i = 0; i <= list_HTML_products.size(); ++i)
+        {
+            //GET PRODUCT INFO
+            std::string HTMLprod = list_HTML_products[i];
+            
+            std::regex nome_prod_reg ("<h1 class=\"product-name\">([^<]+)</h1>");
+            std::regex descricao_prod_reg ("<div><noframes>((.|\n)+)</noframes><iframe");
+            std::regex foto_prod_reg ("<img class=\"swiper-slide-img\" alt=\"(.+)\" src=\"([^\"]+)\"");
+            std::regex preco_a_vista_prod_reg ("<p class=\"sales-price\">([^<]+)</p>");
+            std::regex preco_parcelado_prod_reg ("<p class=\"payment-option payment-option-rate\">([^<]+)</p>");
+            std::regex categoria_prod_reg ("<span class=\"TextUI-iw976r-5 grSSAT TextUI-sc-1hrwx40-0 jIxNod\">([^<]+)</span>");
+            
+            auto nome =smatch_regex(HTMLprod,nome_prod_reg);
+            auto descricao =smatch_regex(HTMLprod,descricao_prod_reg);
+            auto foto =smatch_regex(HTMLprod,foto_prod_reg);
+            auto p_vista =smatch_regex(HTMLprod,preco_a_vista_prod_reg);
+            auto p_parcelado =smatch_regex(HTMLprod,preco_parcelado_prod_reg);
+            auto categoria =smatch_regex(HTMLprod,categoria_prod_reg);
+            std::string saida =
+            "  {\n"
+            "    \"nome\" : \"" + nome +"\",\n"
+            "    \"descricao\" : \"" + descricao +"\",\n"
+            "    \"foto\" : \"" + foto +"\",\n"
+            "    \"preco\" : \"" + p_vista +"\",\n"
+            "    \"preco_parcelado\" : \"" + p_parcelado +"\",\n"
+            "    \"categoria\" : \"" + categoria +"\",\n"
+            // "    \"url\" : \"" + url +"\",\n"
+            "  },\n";
+            list_Jsons.push_back(saida);
+        }    
+}        
+
+ // Function that sends lists of json fron the proceesses running to the master process     
+void envia_master(mpi::communicator world,std::vector< string > &list_Jsons,std::vector<vector<string> >&pedacos_json)
+    {
+        mpi::gather(world,list_Jsons,pedacos_json, 0);// list_Jsons is the list of Json from each process and  pedacos_json is the type of list_Json is a list of list that receives the list of json and add them together
+    }
+    
 
 int main(int argc, char* argv[])
 {
     mpi::environment env(argc, argv);
     mpi::communicator world;
-    int x = world.size();
 
-    // if(world.rank()==0){
+    int num_of_procs = world.size();//Number of processes running
+
+    std::vector<vector<string> > vectorz_cut_total(num_of_procs);//vector with batches of links product
+    std::vector< string > pedacos;//vector that each process receives from the big list of lists
+    std::vector< string > list_HTML_products;//list of HTMLs
+    std::vector< string > list_Jsons; //List of Json from each process
+    std::vector<vector<string> > pedacos_json; //vector that each process  wiil send their sub list of jsons 
+    std::vector<vector<string> > vazio_vec(num_of_procs);//List of list with nothing inside to crete the stop condition
+    std:: string url = "https://www.submarino.com.br/busca/controle-remoto-fisher-price?pfm_carac=controle%20remoto%20fisher%20price&pfm_index=8&pfm_page=search&pfm_type=spectreSuggestions";
+    
+    while (true){
+        if(world.rank()==0){
+        download_products_links_LOOP(url,world,vectorz_cut_total);// Only the master process can download the links, put them in a big list of links and then create a vector of vectors rthat contain the batches according to the number of process
+        }
+        
+        envia_recebe(world,vectorz_cut_total,pedacos,vazio_vec);// the batches are sent to all the running processes including the master (scatter)
+        if (pedacos.size()>0)// If there are links still
+        {
+            std::cout<<world.rank()<< "estou rodando";
+            download_HTMLpages_products_LOOP(world,pedacos,list_HTML_products);
+            get_infos_productHTML_LOOP(url,list_HTML_products,list_Jsons);
+        }
+        else
+        {
+            std::cout<<world.rank()<< "parei";
+            return 0;//break
+        }
+    //returning evrything to master process
+    for (int y =0 ; y< world.size(); ++y)
+    {
+        envia_master(world,list_Jsons,pedacos_json);
+        
+        //Print
+        for (int i =0; i < list_Jsons.size();i++){
+            for (int j =0; j < list_Jsons[i].size() ;j++)
+                {
+                    std::cout << list_Jsons[i][j];
+                }
+        }
+        
+    }
+    return 0;
+    }
+}
+
+//COMPILE:
+//mpicxx Crawler_MPI.cpp -o Crawler_MPI -lboost_mpi -lcurl -lboost_serialization -std=c++11
+//mpiexec ./Crawler_MPI
+//O número de processos usados é controlado pela flag -n. Para executar o programa CrawlerMPI com 16 processos
+//mpiexec -n 16 ./Crawler_MPI
+
+
+
+
+
+
+
+//mpicxx -o exemplo1 exemplo1.cpp -lboost_mpi -lboost_serialization -std=c++11
+//mpiexec exemplo1
+//https://theboostcpplibraries.com/boost.mpi-asynchronous-data-exchange
+// int main(int argc, char *argv[]) {
+
+    
+//     if (world.rank() == 0) {
+//         mpi::request reqs[2];
+//         std::string s[2];
+// //        auto r1 = world.irecv(1, 10, s[0]);
+// //        auto r2 = world.irecv(2, 20, s[1]);
+        
+//         reqs[0] = world.irecv(1, 10, s[0]);
+//         reqs[1] = world.irecv(2, 20, s[1]);
+//         auto  resposta1 =boost::mpi::wait_any(reqs, reqs + 2);//ponteiro para o primeiro e ultimo item do vetor( reqs + 2 ultimo cara do vetor)
+//         std::cout <<  s[(resposta1.second - reqs)] << "; ";
+//         auto  resposta2 = boost::mpi::wait_any(reqs, reqs + 2);
+//         std::cout <<  s[(resposta2.second - reqs)] << "; ";
+// //        reqs[0].wait();
+// //        std::cout << s[0] << "\n" << std::endl;
+// //
+// //        reqs[1].wait();
+// //        std::cout << s[1] << '\n';
+
+
+//     } else if (world.rank() == 1) {
+//         std::string s = "Hello, world!";
+
+//         world.send(0, 10, s);
+//         std::cout << "Fim rank 1 " << std::endl;
+//     } else if (world.rank() == 2) {
+//         std::string s = "Hello, moon!";
+
+//         world.send(0, 20, s); 
+//         std::cout << "Fim rank 2 " << std::endl;
+//     }
+// }
+
+
+
+
+// if(world.rank()==0){
     //     int data;
     //     world.send(world.rank()+1, 0, square(world.rank()));
     //     world.recv(x-1, 0, data);
@@ -215,19 +337,3 @@ int main(int argc, char* argv[])
     //     world.recv(world.rank()-1, 0, data);
     //     std::cout << "Received " << data << " from " << world.rank()-1 << "\n";
     // }
-    std::vector<vector<string> > vectorz_cut_total(x);
-    std::vector< string > pedacos;
-    std:: string url = "https://www.submarino.com.br/busca/controle-remoto-fisher-price?pfm_carac=controle%20remoto%20fisher%20price&pfm_index=8&pfm_page=search&pfm_type=spectreSuggestions";
-    if(world.rank()==0){
-    download_products_links_LOOP(url,world,vectorz_cut_total);
-    }
-    envia_recebe(world,vectorz_cut_total,pedacos);
-   
-    return 0;
-}
-
-//COMPILE:
-//mpicxx Crawler_MPI.cpp -o Crawler_MPI -lboost_mpi -lcurl -lboost_serialization -std=c++11
-//mpiexec ./Crawler_MPI
-//O número de processos usados é controlado pela flag -n. Para executar o programa CrawlerMPI com 16 processos
-//mpiexec -n 16 ./Crawler_MPI
