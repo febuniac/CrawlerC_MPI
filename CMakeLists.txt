@@ -27,3 +27,6 @@ SET_TARGET_PROPERTIES(CrawlerSequencial PROPERTIES COMPILE_FLAGS ${FLAG_SEQUENCI
 add_executable(crawlerDistribuido Crawler_MPI.cpp)
 target_link_libraries(crawlerDistribuido ${MPI_LIBRARIES} "-lcurl -lboost_mpi -lcurl -lboost_serialization -std=c++11")
 SET_TARGET_PROPERTIES(crawlerDistribuido PROPERTIES COMPILE_FLAGS ${FLAG_SEQUENCIAL} LINK_FLAGS ${FLAG_SEQUENCIAL})
+
+
+
