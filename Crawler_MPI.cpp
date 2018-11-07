@@ -307,6 +307,7 @@
                                 std::string link_baixado= pedacos[i];
                                 std::string html_page_prod = curl_downloadHTML(link_baixado);
                                 list_HTML_products.push_back(html_page_prod);
+                                std::cout<<"ALLLLLLOOOOOOOOW  "<<world.rank()<<'\n';
                             }
                      
                         for (int i = 0; i <= pedacos.size(); ++i)
@@ -320,6 +321,7 @@
                                 std::regex preco_a_vista_prod_reg ("<p class=\"sales-price\">([^<]+)</p>");
                                 std::regex preco_parcelado_prod_reg ("<p class=\"payment-option payment-option-rate\">([^<]+)</p>");
                                 std::regex categoria_prod_reg ("<span class=\"TextUI-iw976r-5 grSSAT TextUI-sc-1hrwx40-0 jIxNod\">([^<]+)</span>");
+                                
                                 std::cout<<"nome pre  "<<world.rank()<<'\n';
                                 auto nome =smatch_regex(HTMLprod,nome_prod_reg);
                                 std::cout<<"nome done  "<<world.rank()<<'\n';
