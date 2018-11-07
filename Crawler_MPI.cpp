@@ -323,19 +323,19 @@
                                 std::regex preco_parcelado_prod_reg ("<p class=\"payment-option payment-option-rate\">([^<]+)</p>");
                                 std::regex categoria_prod_reg ("<span class=\"TextUI-iw976r-5 grSSAT TextUI-sc-1hrwx40-0 jIxNod\">([^<]+)</span>");
                                 
-                                std::cout<<"nome pre  "<<world.rank()<<'\n';
+                                //std::cout<<"nome pre  "<<world.rank()<<'\n';
                                 auto nome =smatch_regex(HTMLprod,nome_prod_reg);
-                                std::cout<<"nome done  "<<world.rank()<<'\n';
+                                //std::cout<<"nome done  "<<world.rank()<<'\n';
                                 //auto descricao =smatch_regex(HTMLprod,descricao_prod_reg);
                                 
                                 auto foto =smatch_regex(HTMLprod,foto_prod_reg);
-                                std::cout<<"foto done  "<<world.rank()<<'\n';
+                                //std::cout<<"foto done  "<<world.rank()<<'\n';
                                 auto p_vista =smatch_regex(HTMLprod,preco_a_vista_prod_reg);
-                                std::cout<<"vista done  "<<world.rank()<<'\n';
+                                //std::cout<<"vista done  "<<world.rank()<<'\n';
                                 auto p_parcelado =smatch_regex(HTMLprod,preco_parcelado_prod_reg);
-                                std::cout<<"parcela done  "<<world.rank()<<'\n';
+                                //std::cout<<"parcela done  "<<world.rank()<<'\n';
                                 auto categoria =smatch_regex(HTMLprod,categoria_prod_reg);
-                                std::cout<<"categoria done  "<<world.rank()<<'\n';
+                                //std::cout<<"categoria done  "<<world.rank()<<'\n';
                                 std::string saida =
                                 "  {\n"
                                 "    \"nome\" : \"" + nome +"\",\n"
