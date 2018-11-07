@@ -300,7 +300,7 @@
                     else
                     {
                          //std::cout<< "estou rodando o processo:"<< world.rank();
-                        for (int i = 0; i <= pedacos.size(); ++i)
+                        for (int i = 0; i < pedacos.size(); ++i)
                             {
                                 std::cout<< "estou rodando o processo:"<< world.rank()<<'\n';
                                 std::cout <<"Tamanho do pedaço"<<pedacos.size() << "estou nesta posição do pedaço"<<i<<'\n';
@@ -310,7 +310,7 @@
                                 std::cout<<"ALLLLLLOOOOOOOOW  "<<world.rank()<<'\n';
                             }
                       std::cout<<"GRAÇAS A DEUS ACABOU  "<<world.rank()<<'\n';
-                        for (int i = 0; i <= pedacos.size(); ++i)
+                        for (int i = 0; i < pedacos.size(); ++i)
                             {
                                 std::cout<<"PQP COMEÇÕU DENOVO  "<<world.rank()<<'\n';
                                 //GET PRODUCT INFO
