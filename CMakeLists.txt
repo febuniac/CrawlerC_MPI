@@ -15,6 +15,8 @@ FIND_PACKAGE(PkgConfig REQUIRED)
 # Add global definitions
 add_definitions("-Wall")
 
+
+
 # MPI
 FIND_PACKAGE(MPI REQUIRED)
 include_directories(${MPI_INCLUDE_PATH})

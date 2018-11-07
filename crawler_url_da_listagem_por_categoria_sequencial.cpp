@@ -103,7 +103,7 @@ std::vector< string >  download_HTMLpages_products_LOOP(std::string url){
     std::vector< string > list_HTML_products;
     std::vector< string > list_link_products = download_products_links_LOOP(url);
     
-    for (int i = 0; i <= list_link_products.size(); ++i){
+    for (int i = 0; i < list_link_products.size(); ++i){
         std::string link_baixado= list_link_products[i];
         std::string html_page_prod = curl_downloadHTML(link_baixado);
         list_HTML_products.push_back(html_page_prod);
@@ -121,7 +121,7 @@ std::string smatch_regex(std::string link_produto,std::regex reg){
 
 void get_infos_productHTML_LOOP(std::string url){
     std::vector< string > list_HTML_products = download_HTMLpages_products_LOOP(url);
-    for (int i = 0; i <= list_HTML_products.size(); ++i){
+    for (int i = 0; i < list_HTML_products.size(); ++i){
         //GET PRODUCT INFO
         std::string HTMLprod = list_HTML_products[i];
         
@@ -169,11 +169,13 @@ int main(void)
     double tempoTotalCrawler1;
     double tempoTotalOcioso1;
     
-    t1 = std::chrono::high_resolution_clock::now();
+   
     std::string html_page = curl_downloadHTML(url);
     std::string novo_html = download_products_links_LOOP(url)[0];
+    t1 = std::chrono::high_resolution_clock::now();
     std::string html_page2 = curl_downloadHTML(novo_html);
     //GET PRODUCT INFO
+    
     std::regex nome_prod_reg ("<h1 class=\"product-name\">([^<]+)</h1>");
     std::regex descricao_prod_reg ("<div><noframes>((.|\n)+)</noframes><iframe");
     std::regex foto_prod_reg ("<img class=\"swiper-slide-img\" alt=\"(.+)\" src=\"([^\"]+)\"");

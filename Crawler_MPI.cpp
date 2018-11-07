@@ -305,6 +305,7 @@
                                 std::cout<< "estou rodando o processo:"<< world.rank()<<'\n';
                                 std::cout <<"Tamanho do pedaço"<<pedacos.size() << "estou nesta posição do pedaço"<<i<<'\n';
                                 std::string link_baixado= pedacos[i];
+//COLOCAR TIME AQUI E ADD UM REDUCE
                                 std::string html_page_prod = curl_downloadHTML(link_baixado);
                                 list_HTML_products.push_back(html_page_prod);
                                
