@@ -121,7 +121,7 @@ std::string smatch_regex(std::string link_produto,std::regex reg){
 
 void get_infos_productHTML_LOOP(std::string url){
     std::vector< string > list_HTML_products = download_HTMLpages_products_LOOP(url);
-    for (int i = 0; i < list_HTML_products.size(); ++i){
+    for (int i = 0; i <= list_HTML_products.size(); ++i){
         //GET PRODUCT INFO
         std::string HTMLprod = list_HTML_products[i];
         
@@ -175,7 +175,6 @@ int main(void)
     t1 = std::chrono::high_resolution_clock::now();
     std::string html_page2 = curl_downloadHTML(novo_html);
     //GET PRODUCT INFO
-    
     std::regex nome_prod_reg ("<h1 class=\"product-name\">([^<]+)</h1>");
     std::regex descricao_prod_reg ("<div><noframes>((.|\n)+)</noframes><iframe");
     std::regex foto_prod_reg ("<img class=\"swiper-slide-img\" alt=\"(.+)\" src=\"([^\"]+)\"");
@@ -188,7 +187,7 @@ int main(void)
     auto foto =smatch_regex(html_page2,foto_prod_reg);
     auto p_vista =smatch_regex(html_page2,preco_a_vista_prod_reg);
     auto p_parcelado =smatch_regex(html_page2,preco_parcelado_prod_reg);
-    auto categoria =smatch_regex(html_page2,categoria_prod_reg);
+    //auto categoria =smatch_regex(html_page2,categoria_prod_reg);
     std::string saida =
     "  {\n"
     "    \"nome\" : \"" + nome +"\",\n"
@@ -196,7 +195,7 @@ int main(void)
     "    \"foto\" : \"" + foto +"\",\n"
     "    \"preco\" : \"" + p_vista +"\",\n"
     "    \"preco_parcelado\" : \"" + p_parcelado +"\",\n"
-    "    \"categoria\" : \"" + categoria +"\",\n"
+    //"    \"categoria\" : \"" + categoria +"\",\n"
     // "    \"url\" : \"" + url +"\",\n"
     "  },\n";
     cout<< saida;
