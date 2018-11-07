@@ -233,132 +233,130 @@
             
                 if(world.rank()==0)
                 {
-                download_products_links_LOOP(url,world,vectorz_cut_total);// Only the master process can download the links, put them in a big list of links and then create a vector of vectors rthat contain the batches according to the number of process
-                }
-                envia_recebe(world,vectorz_cut_total,pedacos,vazio_vec);// the batches are sent to all the running processes including the master (scatter)
-                if (pedacos.size()>0)// If there are links still
-                {
-                    std::cout<<world.rank()<< "estou rodando";
-                    download_HTMLpages_products_LOOP(world,pedacos,list_HTML_products);
-                    get_infos_productHTML_LOOP(url,list_HTML_products,list_Jsons);
-                }
-                else
-                {
-                    std::cout<<world.rank()<< "parei";
-                    return 0;//break
-                }
-                //returning evrything to master process
-                envia_master(world,list_Jsons,pedacos_json);//send the jsons back to a vector in the master
+                    std::string vazio ="";
+                    std::vector< string > list_link_products;
+            
+            
+                    while(url != vazio){//Faz isso para todos os produtos
+                        std::string html_page = curl_downloadHTML(url);//Coleta página inicial
+                        
+                        //download_prods_links_________________________________________________________________________
+                        std::regex linksprod_reg("<a class=\"card-product-url\" href=\"([^\"]+)\"");
+                        auto words_begin = std::sregex_iterator(html_page.begin(), html_page.end(), linksprod_reg);
+                        auto words_end = std::sregex_iterator();
+                        std::string link_com_site_antes_p = "";
+                        for (std::sregex_iterator i = words_begin; i != words_end; ++i) {// Enters the Category URL in the specified URL 
+                            std::smatch match = *i;
+                            std::string match_str_prod = match[1].str();
+                            link_com_site_antes_p = "https://www.submarino.com.br" + match_str_prod;
+                            list_link_products.push_back(link_com_site_antes_p);//Creates list of links (complete) 
+                        }       
 
-                for (int i =0; i < pedacos_json.size();i++){
-                    for (int j =0; j < pedacos_json[i].size() ;j++)
+
+                        //_____________________________________________________________________________________________
+                        
+                        //download_next_page_________________________________________________________________________
+                        std::vector< string > list_link_nexts;
+                        CURL *curl;
+                        std::regex linkspages_reg("<li class=\"\"><a href=\"([^<]+)\"><span aria-label=\"Next\">");
+                        auto words_begin2 = std::sregex_iterator(html_page.begin(), html_page.end(), linkspages_reg);
+                        auto words_end2 = std::sregex_iterator();
+                        std::string match_str_next;
+                        std::string link_com_site_antes_n = "";
+                        for (std::sregex_iterator i = words_begin2; i != words_end2; ++i) 
+                            {
+                                std::smatch match = *i;
+                                std::string match_str_next = match[1].str();
+                                link_com_site_antes_n = "https://www.submarino.com.br" + match_str_next;
+                                std::regex amp("amp;");
+                                link_com_site_antes_n = std::regex_replace(link_com_site_antes_n, amp, "");
+                                list_link_nexts.push_back(link_com_site_antes_n);
+                            }
+                            url = link_com_site_antes_n;
+                            //_____________________________________________________________________________________________
+                            }
+                        for (int i = 0; i < list_link_products.size(); ++i)//size of the whole string vector
+                            {
+                                int resto_tam_batch =i%world.size(); //i é o tamanho total da lista de links e n é o numero de processos
+                                vectorz_cut_total[resto_tam_batch].push_back(list_link_products[i]);//cretaing the new vector of batches
+                            }
+                    }
+                    if (vectorz_cut_total.size()<=0)//Condição de parada --> manda a lista vazia
                         {
-                            std::cout << pedacos_json[i][j];
+                            mpi::scatter(world,vazio_vec,pedacos, 0);
                         }
-                }
+                    else
+                        {
+                            mpi::scatter(world,vectorz_cut_total,pedacos, 0); // Manda os batches para todos os processos pedacos é a lista que cada processo ira receber com seu batch especifico
+                            std::cout<< "enviei para: "<< world.rank()<< '\n';
+                        }
+
+                    if (pedacos.size()<=0)// If there are links still
+                    {
+                        std::cout<<world.rank()<< "parei";
+                        return 0;//break
+                       
+                    }
+                    else
+                    {
+                         //std::cout<< "estou rodando o processo:"<< world.rank();
+                        for (int i = 0; i <= pedacos.size(); ++i)
+                            {
+                                std::cout<< "estou rodando o processo:"<< world.rank()<<'\n';
+                                std::cout <<"Tamanho do pedaço"<<pedacos.size() << "estou nesta posição do pedaço"<<i<<'\n';
+                                std::string link_baixado= pedacos[i];
+                                std::string html_page_prod = curl_downloadHTML(link_baixado);
+                                list_HTML_products.push_back(html_page_prod);
+                            }
+                     
+                        for (int i = 0; i <= pedacos.size(); ++i)
+                            {
+                                //GET PRODUCT INFO
+                                std::string HTMLprod = list_HTML_products[i];
+                                
+                                std::regex nome_prod_reg ("<h1 class=\"product-name\">([^<]+)</h1>");
+                                std::regex descricao_prod_reg ("<div><noframes>((.|\n)+)</noframes><iframe");
+                                std::regex foto_prod_reg ("<img class=\"swiper-slide-img\" alt=\"(.+)\" src=\"([^\"]+)\"");
+                                std::regex preco_a_vista_prod_reg ("<p class=\"sales-price\">([^<]+)</p>");
+                                std::regex preco_parcelado_prod_reg ("<p class=\"payment-option payment-option-rate\">([^<]+)</p>");
+                                std::regex categoria_prod_reg ("<span class=\"TextUI-iw976r-5 grSSAT TextUI-sc-1hrwx40-0 jIxNod\">([^<]+)</span>");
+                                
+                                auto nome =smatch_regex(HTMLprod,nome_prod_reg);
+                                auto descricao =smatch_regex(HTMLprod,descricao_prod_reg);
+                                auto foto =smatch_regex(HTMLprod,foto_prod_reg);
+                                auto p_vista =smatch_regex(HTMLprod,preco_a_vista_prod_reg);
+                                auto p_parcelado =smatch_regex(HTMLprod,preco_parcelado_prod_reg);
+                                auto categoria =smatch_regex(HTMLprod,categoria_prod_reg);
+                                std::string saida =
+                                "  {\n"
+                                "    \"nome\" : \"" + nome +"\",\n"
+                                "    \"descricao\" : \"" + descricao +"\",\n"
+                                "    \"foto\" : \"" + foto +"\",\n"
+                                "    \"preco\" : \"" + p_vista +"\",\n"
+                                "    \"preco_parcelado\" : \"" + p_parcelado +"\",\n"
+                                "    \"categoria\" : \"" + categoria +"\",\n"
+                                // "    \"url\" : \"" + url +"\",\n"
+                                "  },\n";
+                                list_Jsons.push_back(saida);
+                                std::cout<< "Eu sou o processo:" <<world.rank()<<'\n';
+
+                                std::cout<< "O tamnho da minha lista  de JSON é  :" <<list_Jsons.size()<<'\n';
+
+                            }    
+                    }
+                    //returning evrything to master process
+                    mpi::gather(world,list_Jsons,pedacos_json, 0);
+                        for (int i =0; i < pedacos_json.size();i++){
+                        for (int j =0; j < pedacos_json[i].size() ;j++)
+                            {
+                                std::cout << pedacos_json[i][j];
+                            }
+                    }
             return 0;
         }
 
         //COMPILE:
-        //mpicxx Crawler_MPI.cpp -o Crawler_MPI -lboost_mpi -lcurl -lboost_serialization -std=c++11
-        //mpiexec ./Crawler_MPI
-        //O número de processos usados é controlado pela flag -n. Para executar o programa CrawlerMPI com 16 processos
-        //mpiexec -n 16 ./Crawler_MPI
+        //mpicxx crawler_mpi2.cpp -o crawler_mpi2 -lboost_mpi -lcurl -lboost_serialization -std=c++11
+        // mpiexec -n 4 ./crawler_mpi2
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        //mpicxx -o exemplo1 exemplo1.cpp -lboost_mpi -lboost_serialization -std=c++11
-        //mpiexec exemplo1
-        //https://theboostcpplibraries.com/boost.mpi-asynchronous-data-exchange
-        // int main(int argc, char *argv[]) {
-
-            
-        //     if (world.rank() == 0) {
-        //         mpi::request reqs[2];
-        //         std::string s[2];
-        // //        auto r1 = world.irecv(1, 10, s[0]);
-        // //        auto r2 = world.irecv(2, 20, s[1]);
-                
-        //         reqs[0] = world.irecv(1, 10, s[0]);
-        //         reqs[1] = world.irecv(2, 20, s[1]);
-        //         auto  resposta1 =boost::mpi::wait_any(reqs, reqs + 2);//ponteiro para o primeiro e ultimo item do vetor( reqs + 2 ultimo cara do vetor)
-        //         std::cout <<  s[(resposta1.second - reqs)] << "; ";
-        //         auto  resposta2 = boost::mpi::wait_any(reqs, reqs + 2);
-        //         std::cout <<  s[(resposta2.second - reqs)] << "; ";
-        // //        reqs[0].wait();
-        // //        std::cout << s[0] << "\n" << std::endl;
-        // //
-        // //        reqs[1].wait();
-        // //        std::cout << s[1] << '\n';
-
-
-        //     } else if (world.rank() == 1) {
-        //         std::string s = "Hello, world!";
-
-        //         world.send(0, 10, s);
-        //         std::cout << "Fim rank 1 " << std::endl;
-        //     } else if (world.rank() == 2) {
-        //         std::string s = "Hello, moon!";
-
-        //         world.send(0, 20, s); 
-        //         std::cout << "Fim rank 2 " << std::endl;
-        //     }
-        // }
-
-
-
-
-        // if(world.rank()==0){
-            //     int data;
-            //     world.send(world.rank()+1, 0, square(world.rank()));
-            //     world.recv(x-1, 0, data);
-            //     std::cout << "Received " << data << " from " << x-1 << "\n";
-            // }
-            // else if(world.rank()== x-1){
-            //     int data;
-            //     world.send(0, 0, square(world.rank()));
-            //     world.recv(world.rank()-1, 0, data);
-            //     std::cout << "Received " << data << " from " << world.rank()-1 << "\n";
-            // }
-            // else{
-            //     int data;
-            //     world.send(world.rank()+1, 0, square(world.rank()));
-            //     world.recv(world.rank()-1, 0, data);
-            //     std::cout << "Received " << data << " from " << world.rank()-1 << "\n";
-            // }
-
-
-            //returning evrything to master process
-            // for (int y =0 ; y< world.size(); ++y)
-            // {
-            //     envia_master(world,list_Jsons,pedacos_json);//send the jsons back to a vector in the master
-                
-            //     //Print
-            //     // for (int i =0; i < list_Jsons.size();i++){
-            //     //     std::cout<< list_Jsons[i];
-            //     // }
-                
-            //     for (int i =0; i < pedacos_json.size();i++){
-            //         for (int j =0; j < pedacos_json[i].size() ;j++)
-            //             {
-            //                 std::cout << pedacos_json[i][j];
-            //             }
-            //     }
-                
-            // }

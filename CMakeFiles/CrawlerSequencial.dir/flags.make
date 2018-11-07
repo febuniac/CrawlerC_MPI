@@ -6,5 +6,5 @@ CXX_FLAGS =  -isysroot /Applications/Xcode.app/Contents/Developer/Platforms/MacO
 
 CXX_DEFINES = 
 
-CXX_INCLUDES = -I/usr/local/Cellar/open-mpi/3.1.2/include 
+CXX_INCLUDES = -I/usr/local/Cellar/open-mpi/3.1.2/include -I/usr/local/include 
 
