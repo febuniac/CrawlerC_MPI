@@ -309,9 +309,10 @@
                                 list_HTML_products.push_back(html_page_prod);
                                 std::cout<<"ALLLLLLOOOOOOOOW  "<<world.rank()<<'\n';
                             }
-                     
+                      std::cout<<"GRAÇAS A DEUS ACABOU  "<<world.rank()<<'\n';
                         for (int i = 0; i <= pedacos.size(); ++i)
                             {
+                                std::cout<<"PQP COMEÇÕU DENOVO  "<<world.rank()<<'\n';
                                 //GET PRODUCT INFO
                                 std::string HTMLprod = list_HTML_products[i];
                                 
