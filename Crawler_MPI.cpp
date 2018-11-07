@@ -307,12 +307,12 @@
                                 std::string link_baixado= pedacos[i];
                                 std::string html_page_prod = curl_downloadHTML(link_baixado);
                                 list_HTML_products.push_back(html_page_prod);
-                                std::cout<<"ALLLLLLOOOOOOOOW  "<<world.rank()<<'\n';
+                               
                             }
-                      std::cout<<"GRAÇAS A DEUS ACABOU  "<<world.rank()<<'\n';
+                      
                         for (int i = 0; i < pedacos.size(); ++i)
                             {
-                                std::cout<<"PQP COMEÇÕU DENOVO  "<<world.rank()<<'\n';
+                               
                                 //GET PRODUCT INFO
                                 std::string HTMLprod = list_HTML_products[i];
                                 
@@ -326,7 +326,7 @@
                                 std::cout<<"nome pre  "<<world.rank()<<'\n';
                                 auto nome =smatch_regex(HTMLprod,nome_prod_reg);
                                 std::cout<<"nome done  "<<world.rank()<<'\n';
-                                //auto descricao =smatch_regex(HTMLprod,descricao_prod_reg);
+                                auto descricao =smatch_regex(HTMLprod,descricao_prod_reg);
                                 
                                 auto foto =smatch_regex(HTMLprod,foto_prod_reg);
                                 std::cout<<"foto done  "<<world.rank()<<'\n';
@@ -339,7 +339,7 @@
                                 std::string saida =
                                 "  {\n"
                                 "    \"nome\" : \"" + nome +"\",\n"
-                                // "    \"descricao\" : \"" + descricao +"\",\n"
+                                "    \"descricao\" : \"" + descricao +"\",\n"
                                 "    \"foto\" : \"" + foto +"\",\n"
                                 "    \"preco\" : \"" + p_vista +"\",\n"
                                 "    \"preco_parcelado\" : \"" + p_parcelado +"\",\n"
