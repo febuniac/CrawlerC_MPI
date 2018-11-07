@@ -121,19 +121,19 @@ std::string smatch_regex(std::string link_produto,std::regex reg){
 
 void get_infos_productHTML_LOOP(std::string url){
     std::vector< string > list_HTML_products = download_HTMLpages_products_LOOP(url);
-    for (int i = 0; i <= list_HTML_products.size(); ++i){
+    for (int i = 0; i < list_HTML_products.size(); ++i){
         //GET PRODUCT INFO
         std::string HTMLprod = list_HTML_products[i];
         
         std::regex nome_prod_reg ("<h1 class=\"product-name\">([^<]+)</h1>");
-        std::regex descricao_prod_reg ("<div><noframes>((.|\n)+)</noframes><iframe");
+        //std::regex descricao_prod_reg ("<div><noframes>((.|\n)+)</noframes><iframe");
         std::regex foto_prod_reg ("<img class=\"swiper-slide-img\" alt=\"(.+)\" src=\"([^\"]+)\"");
         std::regex preco_a_vista_prod_reg ("<p class=\"sales-price\">([^<]+)</p>");
         std::regex preco_parcelado_prod_reg ("<p class=\"payment-option payment-option-rate\">([^<]+)</p>");
         std::regex categoria_prod_reg ("<span class=\"TextUI-iw976r-5 grSSAT TextUI-sc-1hrwx40-0 jIxNod\">([^<]+)</span>");
         
         auto nome =smatch_regex(HTMLprod,nome_prod_reg);
-        auto descricao =smatch_regex(HTMLprod,descricao_prod_reg);
+        //auto descricao =smatch_regex(HTMLprod,descricao_prod_reg);
         auto foto =smatch_regex(HTMLprod,foto_prod_reg);
         auto p_vista =smatch_regex(HTMLprod,preco_a_vista_prod_reg);
         auto p_parcelado =smatch_regex(HTMLprod,preco_parcelado_prod_reg);
@@ -141,14 +141,13 @@ void get_infos_productHTML_LOOP(std::string url){
         std::string saida =
         "  {\n"
         "    \"nome\" : \"" + nome +"\",\n"
-        "    \"descricao\" : \"" + descricao +"\",\n"
+        //"    \"descricao\" : \"" + descricao +"\",\n"
         "    \"foto\" : \"" + foto +"\",\n"
         "    \"preco\" : \"" + p_vista +"\",\n"
         "    \"preco_parcelado\" : \"" + p_parcelado +"\",\n"
         "    \"categoria\" : \"" + categoria +"\",\n"
         // "    \"url\" : \"" + url +"\",\n"
         "  },\n";
-
         cout<< saida;
     }
     
@@ -169,7 +168,7 @@ int main(void)
     double tempoTotalCrawler1;
     double tempoTotalOcioso1;
     
-   
+    
     std::string html_page = curl_downloadHTML(url);
     std::string novo_html = download_products_links_LOOP(url)[0];
     t1 = std::chrono::high_resolution_clock::now();
@@ -183,19 +182,19 @@ int main(void)
     std::regex categoria_prod_reg ("<span class=\"TextUI-iw976r-5 grSSAT TextUI-sc-1hrwx40-0 jIxNod\">([^<]+)</span>");
     
     auto nome =smatch_regex(html_page2,nome_prod_reg);
-    auto descricao =smatch_regex(html_page2,descricao_prod_reg);
+    //auto descricao =smatch_regex(html_page2,descricao_prod_reg);
     auto foto =smatch_regex(html_page2,foto_prod_reg);
     auto p_vista =smatch_regex(html_page2,preco_a_vista_prod_reg);
     auto p_parcelado =smatch_regex(html_page2,preco_parcelado_prod_reg);
-    //auto categoria =smatch_regex(html_page2,categoria_prod_reg);
+    auto categoria =smatch_regex(html_page2,categoria_prod_reg);
     std::string saida =
     "  {\n"
     "    \"nome\" : \"" + nome +"\",\n"
-    "    \"descricao\" : \"" + descricao +"\",\n"
+    //"    \"descricao\" : \"" + descricao +"\",\n"
     "    \"foto\" : \"" + foto +"\",\n"
     "    \"preco\" : \"" + p_vista +"\",\n"
     "    \"preco_parcelado\" : \"" + p_parcelado +"\",\n"
-    //"    \"categoria\" : \"" + categoria +"\",\n"
+    "    \"categoria\" : \"" + categoria +"\",\n"
     // "    \"url\" : \"" + url +"\",\n"
     "  },\n";
     cout<< saida;
@@ -225,7 +224,7 @@ int main(void)
     float tempMedio =tempoTotalCrawler1/lista_prods.size();
     cout << "Tempo Medio dos Produtos: " << tempMedio << '\n';
     
-    //std:: string url = "https://www.submarino.com.br/busca/controle-remoto-fisher-price?pfm_carac=controle%20remoto%20fisher%20price&pfm_index=8&pfm_page=search&pfm_type=spectreSuggestions";
+    //std:: string url = "https://www.submarino.com.br/busca/carrinho-de-bebe-cosco?conteudo=carrinho%20de%20bebe%20cosco&filtro=%5B%7B%22id%22%3A%22wit%22%2C%22value%22%3A%22Cesta%22%2C%22fixed%22%3Afalse%7D%5D&ordenacao=relevance&origem=nanook&suggestion=true";
     // download_products_links_LOOP(url);
     // download_HTMLpages_products_LOOP(url);
     // get_infos_productHTML_LOOP(url);
