@@ -218,6 +218,14 @@
 
         int main(int argc, char* argv[])
         {
+
+            std::chrono::  high_resolution_clock::time_point t1, t2, t3,t4,t5,t6,t7,t8;
+            std::chrono:: duration<double> tempoProduto;
+            std::chrono:: duration<double> tempoTotalOcioso;
+            std::chrono:: duration<double> tempoTotalCrawler;
+            double tempoProduto1;
+            double tempoTotalCrawler1;
+            double tempoTotalOcioso1;
             mpi::environment env(argc, argv);
             mpi::communicator world;
 
@@ -235,7 +243,7 @@
                 {
                     std::string vazio ="";
                     std::vector< string > list_link_products;
-            
+                    t3 = std::chrono::high_resolution_clock::now();
             
                     while(url != vazio){//Faz isso para todos os produtos
                         std::string html_page = curl_downloadHTML(url);//Coleta página inicial
@@ -250,8 +258,11 @@
                             std::string match_str_prod = match[1].str();
                             link_com_site_antes_p = "https://www.submarino.com.br" + match_str_prod;
                             list_link_products.push_back(link_com_site_antes_p);//Creates list of links (complete) 
-                        }       
-
+                        }    
+                        float tempMedio =tempoTotalCrawler1/list_link_products.size();
+                         cout << "Tempo Medio dos Produtos: " << tempMedio << '\n';
+                 
+                       
 
                         //_____________________________________________________________________________________________
                         
@@ -280,6 +291,7 @@
                                 int resto_tam_batch =i%world.size(); //i é o tamanho total da lista de links e n é o numero de processos
                                 vectorz_cut_total[resto_tam_batch].push_back(list_link_products[i]);//cretaing the new vector of batches
                             }
+                            
                     }
                     if (vectorz_cut_total.size()<=0)//Condição de parada --> manda a lista vazia
                         {
@@ -305,16 +317,23 @@
                                 std::cout<< "estou rodando o processo:"<< world.rank()<<'\n';
                                 std::cout <<"Tamanho do pedaço"<<pedacos.size() << "estou nesta posição do pedaço"<<i<<'\n';
                                 std::string link_baixado= pedacos[i];
-//COLOCAR TIME AQUI E ADD UM REDUCE	
+
+                                t5 = std::chrono::high_resolution_clock::now();
                                 std::string html_page_prod = curl_downloadHTML(link_baixado);
+                                t6 = std::chrono::high_resolution_clock::now();
                                 list_HTML_products.push_back(html_page_prod);
                                
                             }
+                                tempoTotalOcioso = std::chrono::duration_cast<std::chrono::duration<double> >(t6 - t5);
+                                tempoTotalOcioso1 = tempoTotalOcioso.count();
+                               
+
                       
                         for (int i = 0; i < pedacos.size(); ++i)
                             {
                                
                                 //GET PRODUCT INFO
+                                t1 = std::chrono::high_resolution_clock::now();
                                 std::string HTMLprod = list_HTML_products[i];
                                 
                                 std::regex nome_prod_reg ("<h1 class=\"product-name\">([^<]+)</h1>");
@@ -324,19 +343,19 @@
                                 std::regex preco_parcelado_prod_reg ("<p class=\"payment-option payment-option-rate\">([^<]+)</p>");
                                 std::regex categoria_prod_reg ("<span class=\"TextUI-iw976r-5 grSSAT TextUI-sc-1hrwx40-0 jIxNod\">([^<]+)</span>");
                                 
-                                //std::cout<<"nome pre  "<<world.rank()<<'\n';
+                          
                                 auto nome =smatch_regex(HTMLprod,nome_prod_reg);
-                                //std::cout<<"nome done  "<<world.rank()<<'\n';
+                         
                                 //auto descricao =smatch_regex(HTMLprod,descricao_prod_reg);
                                 
                                 auto foto =smatch_regex(HTMLprod,foto_prod_reg);
-                                //std::cout<<"foto done  "<<world.rank()<<'\n';
+                                
                                 auto p_vista =smatch_regex(HTMLprod,preco_a_vista_prod_reg);
-                                //std::cout<<"vista done  "<<world.rank()<<'\n';
+                               
                                 auto p_parcelado =smatch_regex(HTMLprod,preco_parcelado_prod_reg);
-                                //std::cout<<"parcela done  "<<world.rank()<<'\n';
+                                
                                 auto categoria =smatch_regex(HTMLprod,categoria_prod_reg);
-                                //std::cout<<"categoria done  "<<world.rank()<<'\n';
+                               
                                 std::string saida =
                                 "  {\n"
                                 "    \"nome\" : \"" + nome +"\",\n"
@@ -347,13 +366,20 @@
                                 "    \"categoria\" : \"" + categoria +"\",\n"
                                 // "    \"url\" : \"" + url +"\",\n"
                                 "  },\n";
+                                t2 = std::chrono::high_resolution_clock::now();
+                                
                                 list_Jsons.push_back(saida);
                                 std::cout<< "Eu sou o processo:" <<world.rank()<<'\n';
 
                                 std::cout<< "O tamnho da minha lista  de JSON é  :" <<list_Jsons.size()<<'\n';
 
-                            }    
+                            }   
+                               tempoProduto = std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1);
+                                tempoProduto1 = tempoProduto.count();
+                                
+                                
                     }
+                    t4 = std::chrono::high_resolution_clock::now();
                     //returning evrything to master process
                     mpi::gather(world,list_Jsons,pedacos_json, 0);
                         for (int i =0; i < pedacos_json.size();i++){
@@ -361,7 +387,17 @@
                             {
                                 std::cout << pedacos_json[i][j];
                             }
+                            
                     }
+                    tempoTotalCrawler = std::chrono::duration_cast<std::chrono::duration<double> >(t4 - t3);
+                    tempoTotalCrawler1 = tempoTotalCrawler.count();
+                    
+
+                    cout << "Tempo total de Execucão do Crawler: " << tempoTotalCrawler1 << '\n';
+                    cout << "Tempo total de um produto: " << tempoProduto1 << '\n'; 
+                   
+                    cout << "Tempo total de Ociosidade do Crawler: " << tempoTotalOcioso1 << '\n';
+
             return 0;
         }
 

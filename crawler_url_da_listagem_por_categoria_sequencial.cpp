@@ -159,7 +159,7 @@ void get_infos_productHTML_LOOP(std::string url){
 
 int main(void)
 {
-    std:: string url = "https://www.submarino.com.br/categoria/informatica/notebook/notebook-gamer";
+    std:: string url = "https://www.submarino.com.br/categoria/celulares-e-smartphones/f/marca-motorola?chave=prf_hi_at_tel_2_motorola";
     std::chrono::  high_resolution_clock::time_point t1, t2, t3,t4,t5,t6,t7,t8;
     std::chrono:: duration<double> tempoProduto;
     std::chrono:: duration<double> tempoTotalOcioso;
