@@ -241,7 +241,7 @@
             std::vector< string > list_Jsons; //List of Json from each process
             std::vector<vector<string> > pedacos_json; //vector that each process  wiil send their sub list of jsons 
             std::vector<vector<string> > vazio_vec(num_of_procs);//List of list with nothing inside to crete the stop condition
-            std:: string url = "https://www.submarino.com.br/busca/controle-remoto-fisher-price?pfm_carac=controle%20remoto%20fisher%20price&pfm_index=8&pfm_page=search&pfm_type=spectreSuggestions";
+            std:: string url = "https://www.submarino.com.br/categoria/moveis/cadeira/cadeira-design?chave=prf_hi_at_mov_cadeiradesign";            
             std::vector< string > list_link_products;
             
             //_____________________________________PROCESS 0 PART 1_________________________________
@@ -428,32 +428,7 @@
                     //_____________________________________ THE END PROCESS 0 Part 2_________________________________________________________________ 
                             
                     }
-                  //mpi::reduce(world, tempMedio, tempMedio_total, std::plus<double>(), 0);             
-                  //mpi::reduce(world, tempoTotalCrawler1, totais, std::plus<double>(), 0);               
-
-                //     // cout << "Tempo total de Execucão do Crawler: " << tempoTotalCrawler1 <<world.rank()<<'\n';
-                //     // cout << "Tempo total de um produto: " << tempoProduto1<<world.rank() << '\n'; 
-                //     // cout << "Tempo Medio dos Produtos: " << tempMedio<<world.rank() << '\n';
-                //     // cout << "Tempo total de Ociosidade do Crawler: " << tempoTotalOcioso1<<world.rank() << '\n';
-                       
-                //     }
-                //     // tempMedio =tempoTotalCrawler1/tamanho;
-                //     // mpi::reduce(world, tempMedio, tempMedio_total, std::plus<double>(), 0);
-                //     // mpi::reduce(world, tempoTotalCrawler1, totais, std::plus<double>(), 0);
-                //     // cout << "Tempo total de Execucão do Crawler: " << tempoTotalCrawler1 <<world.rank()<<'\n';
-                //     // cout << "Tempo total de um produto: " << oneprod_total<<world.rank() << '\n'; 
-                //     // cout << "Tempo Medio dos Produtos: " << tempMedio_total<<world.rank() << '\n';
-                //     // cout << "Tempo total de Ociosidade do Crawler: " << ocioso_total<<world.rank() << '\n';
-                    
-                    
-                // //}
-
-                    
-                //     // cout << "Tempo total de Execucão do Crawler: " << tempoTotalCrawler1 <<world.rank()<<'\n';
-                //     // cout << "Tempo total de um produto: " << tempoProduto1<<world.rank() << '\n'; 
-                //     // cout << "Tempo Medio dos Produtos: " << tempMedio<<world.rank() << '\n';
-                //     // cout << "Tempo total de Ociosidade do Crawler: " << tempoTotalOcioso1<<world.rank() << '\n';
-
+                 
          return 0;
         }
     }

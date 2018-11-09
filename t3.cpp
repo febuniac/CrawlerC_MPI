@@ -237,7 +237,7 @@
             std::vector< string > list_Jsons; //List of Json from each process
             std::vector<vector<string> > pedacos_json; //vector that each process  wiil send their sub list of jsons 
             std::vector<vector<string> > vazio_vec(num_of_procs);//List of list with nothing inside to crete the stop condition
-            std:: string url = "https://www.submarino.com.br/busca/controle-remoto-fisher-price?pfm_carac=controle%20remoto%20fisher%20price&pfm_index=8&pfm_page=search&pfm_type=spectreSuggestions";
+            std:: string url = "https://www.submarino.com.br/categoria/moveis/cadeira/cadeira-design?chave=prf_hi_at_mov_cadeiradesign";
             std::vector< string > list_link_products;
                 if(world.rank()==0)
                 {
