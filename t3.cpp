@@ -228,13 +228,9 @@
             double tempoTotalOcioso1;
             mpi::environment env(argc, argv);
             mpi::communicator world;
-            double tempMedio;
             double tamanho;
             int num_of_procs = world.size();//Number of processes running
-            double oneprod_total;
-            double ocioso_total;
-            double tempMedio_total;
-            double totais; 
+
             std::vector<vector<string> > vectorz_cut_total(num_of_procs);//vector with batches of links product
             std::vector< string > pedacos;//vector that each process receives from the big list of lists
             std::vector< string > list_HTML_products;//list of HTMLs
@@ -243,14 +239,15 @@
             std::vector<vector<string> > vazio_vec(num_of_procs);//List of list with nothing inside to crete the stop condition
             std:: string url = "https://www.submarino.com.br/busca/controle-remoto-fisher-price?pfm_carac=controle%20remoto%20fisher%20price&pfm_index=8&pfm_page=search&pfm_type=spectreSuggestions";
             std::vector< string > list_link_products;
-            
-            //_____________________________________PROCESS 0 PART 1_________________________________
                 if(world.rank()==0)
                 {
-                    t3 = std::chrono::high_resolution_clock::now();//TIME FOR CRAWLER TOTAL TIME (BEGIN)
                     std::string vazio ="";
+                    // std::vector< string > list_link_products;
+                    t3 = std::chrono::high_resolution_clock::now();
+            
                     while(url != vazio){//Faz isso para todos os produtos
                         std::string html_page = curl_downloadHTML(url);//Coleta página inicial
+                        
                         //download_prods_links_________________________________________________________________________
                         std::regex linksprod_reg("<a class=\"card-product-url\" href=\"([^\"]+)\"");
                         auto words_begin = std::sregex_iterator(html_page.begin(), html_page.end(), linksprod_reg);
@@ -263,11 +260,13 @@
                             link_com_site_antes_p = "https://www.submarino.com.br" + match_str_prod;
                             list_link_products.push_back(link_com_site_antes_p);//Creates list of links (complete) 
                             
-                        } 
-                        // the end download_prods_links_____________________________________________________________________________________________
-                           
+                        }    
                         tamanho = list_link_products.size();
                  
+                       
+
+                        //_____________________________________________________________________________________________
+                        
                         //download_next_page_________________________________________________________________________
                         std::vector< string > list_link_nexts;
                         CURL *curl;
@@ -286,66 +285,58 @@
                                 list_link_nexts.push_back(link_com_site_antes_n);
                             }
                             url = link_com_site_antes_n;
-                            // the end download_next_page_____________________________________________________________________________________________
+                            //_____________________________________________________________________________________________
                     }
-                
-                     //divide lists in batches______________________________________________________________________    
                         for (int i = 0; i < list_link_products.size(); ++i)//size of the whole string vector
                             {
                                 int resto_tam_batch =i%world.size(); //i é o tamanho total da lista de links e n é o numero de processos
                                 vectorz_cut_total[resto_tam_batch].push_back(list_link_products[i]);//cretaing the new vector of batches
                             }
-                    //divide lists in batches______________________________________________________________________       
+                            
                 }
-                //_____________________________________ THE END PROCESS 0 PART 1_________________________________  
-                    
-                //send batches to all process______________________________________________________________________  
-                       
+                
                     if (vectorz_cut_total.size()<=0)//Condição de parada --> manda a lista vazia
                         {
                             mpi::scatter(world,vazio_vec,pedacos, 0);
-
                         }
                     else
                         {
                             mpi::scatter(world,vectorz_cut_total,pedacos, 0); // Manda os batches para todos os processos pedacos é a lista que cada processo ira receber com seu batch especifico
                             std::cout<< "enviei para: "<< world.rank()<< '\n';
                         }
-                // the end send batches to all process______________________________________________________________________ 
-                 
-                 
-                 //_____________________________________PROCESS 1_________________________________________________________________
-        
-                //while(true){
-                     //checking to do stop comndition______________________________________________________________________  
+
                     if (pedacos.size()<=0)// If there are links still
                     {
                         std::cout<<world.rank()<< "parei";
                         return 0;//break
                        
                     }
-                    //the end checking to do stop comndition______________________________________________________________________  
-                    
-                    //managing products in batch______________________________________________________________________  
                     else
                     {
-
+                         //std::cout<< "estou rodando o processo:"<< world.rank();
                         for (int i = 0; i < pedacos.size(); ++i)
                             {
                                 std::cout<< "estou rodando o processo:"<< world.rank()<<'\n';
                                 std::cout <<"Tamanho do pedaço"<<pedacos.size() << "estou nesta posição do pedaço"<<i<<'\n';
                                 std::string link_baixado= pedacos[i];
-                                //downloading all HTML from thenbatch and adding to vector______________________________________________________________________  
-                                t5 = std::chrono::high_resolution_clock::now();//TIME FOR OCIOSO TIME (BEGIN)
+
+                                t5 = std::chrono::high_resolution_clock::now();
                                 std::string html_page_prod = curl_downloadHTML(link_baixado);
-                                t6 = std::chrono::high_resolution_clock::now();//TIME FOR OCIOSO TIME (END )
+                                t6 = std::chrono::high_resolution_clock::now();
                                 list_HTML_products.push_back(html_page_prod);
-                                //the end downloading all HTML from thenbatch and adding to vector______________________________________________________________________ 
                                 tempoTotalOcioso = std::chrono::duration_cast<std::chrono::duration<double> >(t6 - t5);
                                 tempoTotalOcioso1 += tempoTotalOcioso.count();
-                                t1 = std::chrono::high_resolution_clock::now();//TIME FOR PROCESSING TIME (BEGIN)
-                                //get product info______________________________________________________________________  
+                               
+                            }
+                               
+                               
 
+                      
+                        for (int i = 0; i < pedacos.size(); ++i)
+                            {
+                               
+                                //GET PRODUCT INFO
+                                t1 = std::chrono::high_resolution_clock::now();
                                 std::string HTMLprod = list_HTML_products[i];
                                 
                                 std::regex nome_prod_reg ("<h1 class=\"product-name\">([^<]+)</h1>");
@@ -367,9 +358,7 @@
                                 auto p_parcelado =smatch_regex(HTMLprod,preco_parcelado_prod_reg);
                                 
                                 auto categoria =smatch_regex(HTMLprod,categoria_prod_reg);
-                                // the end get product info______________________________________________________________________  
-                                
-                                //create json for product______________________________________________________________________  
+                               
                                 std::string saida =
                                 "  {\n"
                                 "    \"nome\" : \"" + nome +"\",\n"
@@ -380,9 +369,7 @@
                                 "    \"categoria\" : \"" + categoria +"\",\n"
                                 // "    \"url\" : \"" + url +"\",\n"
                                 "  },\n";
-
-                                 //the end create json for product______________________________________________________________________  
-                                t2 = std::chrono::high_resolution_clock::now();//TIME FOR PROCESSING TIME (END)
+                                t2 = std::chrono::high_resolution_clock::now();
                                 
                                 list_Jsons.push_back(saida);
                                 std::cout<< "Eu sou o processo:" <<world.rank()<<'\n';
@@ -390,73 +377,39 @@
                                 std::cout<< "O tamnho da minha lista  de JSON é  :" <<list_Jsons.size()<<'\n';
                                 tempoProduto = std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1);
                                 tempoProduto1 += tempoProduto.count();
-                            }
-
-                        //returning evrything to master process___________________________________________
-                        mpi::gather(world,list_Jsons,pedacos_json, 0);
-                        mpi::reduce(world, tempoProduto1, oneprod_total, std::plus<double>(), 0);//ADDING ALL PROCESS PROCESSIMNG TIME
-                        mpi::reduce(world, tempoTotalOcioso1, ocioso_total, std::plus<double>(), 0);//ADDING ALL PROCESS OCIOSO TIME
-                        
-                        
-                        
-                        
-                        
-                        //the end returning evrything to master process___________________________________________
-                        //_____________________________________ THE END PROCESS 1_________________________________________________________________
-                        //printing everythin only in master process___________________________________________
-                        //_____________________________________ PROCESS 0 Part 2_________________________________________________________________
-                        if (world.rank()==0){
-                        t4 = std::chrono::high_resolution_clock::now(); //TIME FOR CRAWLER TOTAL TIME (END )
-                        tempoTotalCrawler = std::chrono::duration_cast<std::chrono::duration<double> >(t4 - t3);
-                        tempoTotalCrawler1 = tempoTotalCrawler.count();
-                        tempMedio =tempoTotalCrawler1/tamanho;
+                            }   
+                               
+                                
+                                
+                    }
+                    t4 = std::chrono::high_resolution_clock::now();
+                    //returning evrything to master process
+                    
+                    mpi::gather(world,list_Jsons,pedacos_json, 0);
+                    if (world.rank()==0){
                         for (int i =0; i < pedacos_json.size();i++)
                         {
                         for (int j =0; j < pedacos_json[i].size() ;j++)
                             {
                                 std::cout << pedacos_json[i][j];
                             }
-                        cout << "Tempo total de Execucão do Crawler: " << tempoTotalCrawler1 <<world.rank()<<'\n';
-                        cout << "Tempo total de um produto: " << tempoProduto1<<world.rank() << '\n'; 
-                        cout << "Tempo Medio dos Produtos: " << tempMedio<<world.rank() << '\n';
-                        cout << "Tempo total de Ociosidade do Crawler: " << tempoTotalOcioso1<<world.rank() << '\n';
-                        }  
-                        
-                       
-                        
-                         // the en printing everythingonly in master process___________________________________________
-                    //_____________________________________ THE END PROCESS 0 Part 2_________________________________________________________________ 
                             
+                        }
                     }
-                  //mpi::reduce(world, tempMedio, tempMedio_total, std::plus<double>(), 0);             
-                  //mpi::reduce(world, tempoTotalCrawler1, totais, std::plus<double>(), 0);               
-
-                //     // cout << "Tempo total de Execucão do Crawler: " << tempoTotalCrawler1 <<world.rank()<<'\n';
-                //     // cout << "Tempo total de um produto: " << tempoProduto1<<world.rank() << '\n'; 
-                //     // cout << "Tempo Medio dos Produtos: " << tempMedio<<world.rank() << '\n';
-                //     // cout << "Tempo total de Ociosidade do Crawler: " << tempoTotalOcioso1<<world.rank() << '\n';
-                       
-                //     }
-                //     // tempMedio =tempoTotalCrawler1/tamanho;
-                //     // mpi::reduce(world, tempMedio, tempMedio_total, std::plus<double>(), 0);
-                //     // mpi::reduce(world, tempoTotalCrawler1, totais, std::plus<double>(), 0);
-                //     // cout << "Tempo total de Execucão do Crawler: " << tempoTotalCrawler1 <<world.rank()<<'\n';
-                //     // cout << "Tempo total de um produto: " << oneprod_total<<world.rank() << '\n'; 
-                //     // cout << "Tempo Medio dos Produtos: " << tempMedio_total<<world.rank() << '\n';
-                //     // cout << "Tempo total de Ociosidade do Crawler: " << ocioso_total<<world.rank() << '\n';
                     
-                    
-                // //}
+                    tempoTotalCrawler = std::chrono::duration_cast<std::chrono::duration<double> >(t4 - t3);
+                    tempoTotalCrawler1 = tempoTotalCrawler.count();
+                    float tempMedio =tempoTotalCrawler1/tamanho;
+                   
 
                     
-                //     // cout << "Tempo total de Execucão do Crawler: " << tempoTotalCrawler1 <<world.rank()<<'\n';
-                //     // cout << "Tempo total de um produto: " << tempoProduto1<<world.rank() << '\n'; 
-                //     // cout << "Tempo Medio dos Produtos: " << tempMedio<<world.rank() << '\n';
-                //     // cout << "Tempo total de Ociosidade do Crawler: " << tempoTotalOcioso1<<world.rank() << '\n';
+                    cout << "Tempo total de Execucão do Crawler: " << tempoTotalCrawler1 <<world.rank()<<'\n';
+                    cout << "Tempo total de um produto: " << tempoProduto1<<world.rank() << '\n'; 
+                    cout << "Tempo Medio dos Produtos: " << tempMedio<<world.rank() << '\n';
+                    cout << "Tempo total de Ociosidade do Crawler: " << tempoTotalOcioso1<<world.rank() << '\n';
 
-         return 0;
+            return 0;
         }
-    }
 
         //COMPILE:
         //mpicxx Crawler_MPI.cpp -o Crawler_MPI -lboost_mpi -lcurl -lboost_serialization -std=c++11
