@@ -223,9 +223,9 @@
             std::chrono:: duration<double> tempoProduto;
             std::chrono:: duration<double> tempoTotalOcioso;
             std::chrono:: duration<double> tempoTotalCrawler;
-            double tempoProduto1;
-            double tempoTotalCrawler1;
-            double tempoTotalOcioso1;
+            double tempoProduto1=0;
+            double tempoTotalCrawler1=0;
+            double tempoTotalOcioso1=0;
             mpi::environment env(argc, argv);
             mpi::communicator world;
             double tempMedio;
@@ -233,8 +233,8 @@
             int num_of_procs = world.size();//Number of processes running
             double oneprod_total;
             double ocioso_total;
-            double tempMedio_total;
-            double totais; 
+
+            
             std::vector<vector<string> > vectorz_cut_total(num_of_procs);//vector with batches of links product
             std::vector< string > pedacos;//vector that each process receives from the big list of lists
             std::vector< string > list_HTML_products;//list of HTMLs

@@ -79,7 +79,8 @@ crawlerDistribuido_EXTERNAL_OBJECTS =
 
 crawlerDistribuido: CMakeFiles/crawlerDistribuido.dir/Crawler_MPI.cpp.o
 crawlerDistribuido: CMakeFiles/crawlerDistribuido.dir/build.make
-crawlerDistribuido: /usr/local/Cellar/open-mpi/3.1.2/lib/libmpi.dylib
+crawlerDistribuido: /usr/local/Cellar/open-mpi/3.1.2/lib/libmpi.dylib/usr/local/lib/libboost_mpi-mt.dylib
+crawlerDistribuido: /usr/local/lib/libboost_serialization-mt.dylib
 crawlerDistribuido: CMakeFiles/crawlerDistribuido.dir/link.txt
 	@$(CMAKE_COMMAND) -E cmake_echo_color --switch=$(COLOR) --green --bold --progress-dir=/Users/felipebuniac/Github/CrawlerC_MPI/CMakeFiles --progress-num=$(CMAKE_PROGRESS_2) "Linking CXX executable crawlerDistribuido"
 	$(CMAKE_COMMAND) -E cmake_link_script CMakeFiles/crawlerDistribuido.dir/link.txt --verbose=$(VERBOSE)
